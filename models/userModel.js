@@ -11,9 +11,25 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    name: {
+    username: {
       type: String,
       required: true,
+    },
+    preferences: {
+      type: {
+        categories: { type: [String], default: [] },
+        sources: { type: [String], default: [] },
+        language: { type: String, default: "en" },
+        region: { type: String, default: "global" },
+        readingFrequency: {
+          type: String,
+          enum: ["daily", "weekly", "monthly"],
+          default: "daily",
+        },
+        trendingPreference: { type: Boolean, default: true },
+      },
+      default: {},
+      required: false,
     },
   },
   { timestamps: true },
