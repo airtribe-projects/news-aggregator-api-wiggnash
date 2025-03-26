@@ -1,7 +1,7 @@
 import express from "express";
 import connectDb from "./config/db.js";
 import dotenv from "dotenv";
-import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use("/users", authRoutes);
+app.use("/users", userRoutes);
 
 const startServer = async () => {
   try {

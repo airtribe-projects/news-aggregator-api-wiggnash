@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 import validateAuthRouteInput from "../middleware/validateAuth.js";
 
-const authRoutes = express.Router();
+const userRoutes = express.Router();
 
 /**
  * Registers a new user for the application.
@@ -100,4 +100,4 @@ authRoutes.post("/login", validateAuthRouteInput, async (req, res) => {
   res.status(200).json({ message: "Login successful", token });
 });
 
-export default authRoutes;
+export default userRoutes;
