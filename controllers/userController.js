@@ -1,10 +1,6 @@
-import express from "express";
+import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
-import validateAuthRouteInput from "../middleware/validateAuth.js";
-
-const userRoutes = express.Router();
 
 /**
  * Registers a new user for the application.
@@ -22,7 +18,7 @@ const userRoutes = express.Router();
  * @throws {Error} If any of the input parameters are invalid or if the username/email is already taken.
  */
 
-authRoutes.post("/signup", validateAuthRouteInput, async (req, res) => {
+export const registerUser = async (req, res) => {
   try {
     const { username, password, email } = req.body;
 
@@ -50,12 +46,16 @@ authRoutes.post("/signup", validateAuthRouteInput, async (req, res) => {
 
     await newUser.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(200).json({
+      message: "User registered successfully",
+      username: newUser.username,
+      email: newUser.email,
+    });
   } catch (error) {
     console.error("Error in /signup", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
-});
+};
 
 /**
  * Handles user login for the application.
@@ -73,8 +73,7 @@ authRoutes.post("/signup", validateAuthRouteInput, async (req, res) => {
  * @throws {Error} If any of the input parameters are missing, if the user is not found, or if the password is invalid.
  */
 
-// User login Route
-authRoutes.post("/login", validateAuthRouteInput, async (req, res) => {
+export const loginUser = async (req, res) => {
   const { username, email, password } = req.body;
 
   // check if the user exists or not
@@ -98,6 +97,80 @@ authRoutes.post("/login", validateAuthRouteInput, async (req, res) => {
     expiresIn: "7d",
   });
   res.status(200).json({ message: "Login successful", token });
-});
+};
 
-export default userRoutes;
+export const getUserPreferences = async (req, res) => {
+  const userId = req.user;
+
+  const user = await User.findById(userId);
+
+  res.status(200).send({ preferences: user.preferences });
+};
+
+export const updateUserPreferences = async (req, res) => {
+  try {
+    const userId = req.user;
+    const {
+      categories,
+      sources,
+      language,
+      region,
+      readingFrequency,
+      trendingPreference,
+    } = req.body;
+
+    // validat the request fields
+    const validFrequencies = ["daily", "weekly", "monthly"];
+    if (readingFrequency && !validFrequencies.includes(readingFrequency)) {
+      return res.status(400).json({ message: "Invalid reading frequency" });
+    }
+
+    if (categories && !Array.isArray(categories)) {
+      return res.status(400).json({ message: "Invalid categories" });
+    }
+
+    if (sources && !Array.isArray(sources)) {
+      return res.status(400).json({ message: "Invalid sources" });
+    }
+
+    if (language && typeof language !== "string") {
+      return res.status(400).json({ message: "Invalid language" });
+    }
+
+    if (region && typeof region !== "string") {
+      return res.status(400).json({ message: "Invalid region" });
+    }
+
+    if (trendingPreference && typeof trendingPreference !== "boolean") {
+      return res.status(400).json({ message: "Invalid trendingPreference" });
+    }
+
+    // Construct update object dynamically
+    const updateFields = {};
+    if (categories) updateFields["preferences.categories"] = categories;
+    if (sources) updateFields["preferences.sources"] = sources;
+    if (language) updateFields["preferences.language"] = language;
+    if (region) updateFields["preferences.region"] = region;
+    if (readingFrequency)
+      updateFields["preferences.readingFrequency"] = readingFrequency;
+    if (trendingPreference !== undefined)
+      updateFields["preferences.trendingPreference"] = trendingPreference;
+
+    console.log(updateFields);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).send({ preferences: updatedUser.preferences });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

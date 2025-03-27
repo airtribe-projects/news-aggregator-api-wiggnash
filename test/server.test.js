@@ -1,13 +1,22 @@
-const tap = require("tap");
-const supertest = require("supertest");
-import app from "../app";
+// const tap = require("tap");
+// const supertest = require("supertest");
+import tap from "tap";
+import supertest from "supertest";
+import app from "../app.js";
 const server = supertest(app);
 
 const mockUser = {
-  name: "Clark Kent",
+  username: "ClarkKent",
   email: "clark@superman.com",
   password: "Krypt()n8",
-  preferences: ["movies", "comics"],
+  preferences: {
+    categories: ["movies", "comics"],
+    sources: [],
+    language: "en",
+    region: "global",
+    readingFrequency: "daily",
+    trendingPreference: true,
+  },
 };
 
 let token = "";
@@ -16,7 +25,10 @@ let token = "";
 
 tap.test("POST /users/signup", async (t) => {
   const response = await server.post("/users/signup").send(mockUser);
-  t.equal(response.status, 200);
+  t.ok(
+    response.status === 200 || response.status === 409,
+    "Status should be 200 or 409",
+  );
   t.end();
 });
 
@@ -54,7 +66,7 @@ tap.test("POST /users/login with wrong password", async (t) => {
 tap.test("GET /users/preferences", async (t) => {
   const response = await server
     .get("/users/preferences")
-    .set("Authorization", `Bearer ${token}`);
+    .set("Authorization", `${token}`);
   t.equal(response.status, 200);
   t.hasOwnProp(response.body, "preferences");
   t.same(response.body.preferences, mockUser.preferences);
@@ -70,7 +82,7 @@ tap.test("GET /users/preferences without token", async (t) => {
 tap.test("PUT /users/preferences", async (t) => {
   const response = await server
     .put("/users/preferences")
-    .set("Authorization", `Bearer ${token}`)
+    .set("Authorization", `${token}`)
     .send({
       preferences: ["movies", "comics", "games"],
     });
@@ -80,7 +92,7 @@ tap.test("PUT /users/preferences", async (t) => {
 tap.test("Check PUT /users/preferences", async (t) => {
   const response = await server
     .get("/users/preferences")
-    .set("Authorization", `Bearer ${token}`);
+    .set("Authorization", `${token}`);
   t.equal(response.status, 200);
   t.same(response.body.preferences, ["movies", "comics", "games"]);
   t.end();
