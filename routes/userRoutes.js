@@ -1,9 +1,10 @@
 import express from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
+
+// middleware
 import validateAuthRouteInput from "../middleware/validateAuth.js";
 import validateToken from "../middleware/validateToken.js";
+
+// controllers
 import {
   registerUser,
   loginUser,

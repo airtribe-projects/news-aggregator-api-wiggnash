@@ -1,35 +1,21 @@
-import express from "express";
-import connectDb from "./config/db.js";
 import dotenv from "dotenv";
+import express from "express";
+import startServer from "./config/serverStart.js";
+
+// Routes Import
+import newsRoutes from "./routes/newsRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use("/users", userRoutes);
+app.use("/news", newsRoutes);
 
-const startServer = async () => {
-  try {
-    // Initialize the database connection before the server starts
-    await connectDb();
-    app.listen(PORT, (err) => {
-      if (err) {
-        return console.log("Something bad happened", err);
-      }
-      console.log(`Server is listening on ${PORT}`);
-    });
-  } catch (error) {
-    console.error("Error starting server:", error);
-    process.exit(1);
-  }
-};
-
-startServer();
+startServer(app);
 
 export default app;
